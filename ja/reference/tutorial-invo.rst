@@ -58,9 +58,12 @@ INVOには、アプリケーションの一般的なパラメーターをセッ�
     // ...
 
     // 設定の読み込み
-    $config = new ConfigIni(APP_PATH . 'app/config/config.ini');
+    $config = new ConfigIni(
+        APP_PATH . "app/config/config.ini"
+    );
 
-:doc:`Phalcon\\Config <config>` allows us to manipulate the file in an object-oriented way.
+:doc:`Phalcon\\Config <config>` を使うと設定ファイルをオブジェクト指向のやり方で操作できます。
+
 設定ファイルは以下の設定を含んでいます:
 
 .. code-block:: ini
@@ -93,7 +96,7 @@ Phalconには、定義済みの慣習的な設定は全くありません。セ�
     /**
      * Auto-loader configuration
      */
-    require APP_PATH . 'app/config/loader.php';
+    require APP_PATH . "app/config/loader.php";
 
 オートローダーにディレクトリを登録すると、アプリケーションは、必要になったクラスを登録されたディレクトリ内で探します。
 
@@ -103,20 +106,21 @@ Phalconには、定義済みの慣習的な設定は全くありません。セ�
 
     $loader = new Phalcon\Loader();
 
-    // We're a registering a set of directories taken from the configuration file
+    // 設定ファイルに書かれていたディレクトリを登録する
     $loader->registerDirs(
-        array(
+        [
             APP_PATH . $config->application->controllersDir,
             APP_PATH . $config->application->pluginsDir,
             APP_PATH . $config->application->libraryDir,
             APP_PATH . $config->application->modelsDir,
             APP_PATH . $config->application->formsDir,
-        )
-    )->register();
+        ]
+    );
+
+    $loader->register();
 
 上記コードでは、設定ファイルに定義されているディレクトリを登録していることに注意してください。viewsDirディレクトリだけは、登録しません。viewsDirにはHTMLファイルとPHPファイルが含まれますが、クラスは含まれていないからです。
-Also, note that we have using a constant called APP_PATH, this constant is defined in the bootstrap
-(public/index.php) to allow us have a reference to the root of our project:
+また、APP_PATHという定数を使っていることに注意してください。この定数はブートストラップファイル(public/index.php)で定義されているもので、プロジェクトのルートパスを参照することができます。
 
 .. code-block:: php
 
@@ -124,24 +128,25 @@ Also, note that we have using a constant called APP_PATH, this constant is defin
 
     // ...
 
-    define('APP_PATH', realpath('..') . '/');
+    define(
+        "APP_PATH",
+        realpath("..") . "/"
+    );
 
-Registering services
+サービスの登録
 --------------------
-Another file that is required in the bootstrap is (app/config/services.php). This file allow
-us to organize the services that INVO does use.
+ブートストラップで必要とされる他のファイルは(app/config/services.php)です。
+このファイルでINVOが利用するサービスを組織することができます。
 
 .. code-block:: php
 
     <?php
 
     /**
-     * Load application services
-     */
-    require APP_PATH . 'app/config/services.php';
+     * アプリケーションサービスをロードする
+	 */
+    require APP_PATH . "app/config/services.php";
 
-Service registration is achieved as in the previous tutorial, making use of a closure to lazily loads
-the required components:
 
 .. code-block:: php
 
@@ -152,17 +157,22 @@ the required components:
     // ...
 
     /**
-     * The URL component is used to generate all kind of URLs in the application
+     * URLコンポーネントはこのアプリケーションにおける全てのURLを生成するために使われます
      */
-    $di->set('url', function () use ($config) {
-        $url = new UrlProvider();
+    $di->set(
+        "url",
+        function () use ($config) {
+            $url = new UrlProvider();
 
-        $url->setBaseUri($config->application->baseUri);
+            $url->setBaseUri(
+                $config->application->baseUri
+            );
 
-        return $url;
-    });
+            return $url;
+        }
+    );
 
-We will discuss this file in depth later.
+後で、我々はこのファイルについてより深く論じます。
 
 リクエストの処理
 ----------------
@@ -199,13 +209,16 @@ We will discuss this file in depth later.
     // ...
 
     // コンポーネントがsessionサービスを最初に要求した時に、セッションを開始する
-    $di->set('session', function () {
-        $session = new Session();
+    $di->set(
+        "session",
+        function () {
+            $session = new Session();
 
-        $session->start();
+            $session->start();
 
-        return $session;
-    });
+            return $session;
+        }
+    );
 
 これで、アダプタを変更して、初期化処理を追加する等を自由に行えるようになりました。サービスは "session" という名前で登録されていることに注意してください。これは、フレームワークがサービスコンテナ内の有効なサービスを見分けるための慣習です。
 
@@ -225,7 +238,7 @@ We will discuss this file in depth later.
 
 FactoryDefault はフレームワークが標準的に提供しているコンポーネントサービスの大部分を登録します。もし、サービス定義のオーバーライドが必要な場合、"session" を上で定義したのと同じように同じ名前で再度定義してください。以上が、:code:`$di` 変数が存在する理由です。
 
-In next chapter, we will see how to authentication and authorization is implemented in INVO.
+次の章では、INVOに認証と承認を実装する方法を見ていきます。
 
 .. _Github: https://github.com/phalcon/invo
 .. _Bootstrap: http://getbootstrap.com/

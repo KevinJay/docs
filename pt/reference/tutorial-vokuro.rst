@@ -1,61 +1,61 @@
 Tutorial 6: Vökuró
 ==================
-Vökuró is another sample application you can use to learn more about Phalcon.
-Vökuró is a small website that shows how to implement a security features and
-management of users and permissions. You can clone its code from Github_.
+Vökuró é outro exemplo de aplicativo que você pode usar para aprender mais sobre Phalcon.
+Vökuró é um pequeno site que mostra como implementar recursos de segurança e
+gerenciamento de usuários e permissões. É possível clonar o seu código do Github_.
 
-Project Structure
+Estrutura do Projeto
 -----------------
-Once you clone the project in your document root you'll see the following structure:
+Depois de clonar o projeto em sua raiz do documento você verá a seguinte estrutura:
 
 .. code-block:: bash
 
     vokuro/
         app/
-            cache/
             config/
             controllers/
             forms/
             library/
             models/
             views/
+        cache/
         public/
             css/
             img/
         schemas/
 
-This project follows a quite similar structure to INVO. Once you open the application in your
-browser http://localhost/vokuro you'll see something like this:
+Este projecto segue uma estrutura bastante semelhante ao INVO. Uma vez que você abrir o aplicativo em seu
+navegador http://localhost/vokuro você verá algo parecido com isto:
 
 .. figure:: ../_static/img/vokuro-1.png
    :align: center
 
-The application is divided into two parts, a frontend, where visitors can sign up the service
-and a backend where administrative users can manage registered users. Both frontend and backend
-are combined in a single module.
+O aplicativo é dividido em duas partes, a frontend, onde os visitantes podem se inscrever no serviço
+e uma backend onde os usuários administrativos podem gerenciar usuários registrados. Ambos frontend e backend
+são combinados num único módulo.
 
 Load Classes and Dependencies
 -----------------------------
-This project uses :doc:`Phalcon\\Loader <../api/Phalcon_Loader>` to load controllers, models, forms, etc. within the project and composer_
-to load the project's dependencies. So, the first thing you have to do before execute Vökuró is
-install its dependencies via composer_. Assuming you have it correctly installed, type the
-following command in the console:
+Este projeto utiliza :doc:`Phalcon\\Loader <../api/Phalcon_Loader>` para carregar controladores, modelos, formulários, etc. dentro do projeto e composer_
+para carregar as dependências do projeto. Assim, a primeira coisa que você tem que fazer antes de executar Vökuró é
+instalar suas dependências via composer_. Supondo que você tenha corretamente instalado, digite o
+seguinte comando no console:
 
 .. code-block:: bash
 
     cd vokuro
     composer install
 
-Vökuró sends emails to confirm the sign up of registered users using Swift,
-the composer.json looks like:
+Vökuró envia e-mails para confirmar a inscrição de usuários registrados que utilizam Swift,
+o composer.json se parece com:
 
 .. code-block:: json
 
     {
         "require" : {
-            "php" : ">=5.4.0",
-            "ext-phalcon" : ">=2.0.0",
-            "swiftmailer/swiftmailer" : "5.0.*",
+            "php" : ">=5.5.0",
+            "ext-phalcon" : ">=3.0.0",
+            "swiftmailer/swiftmailer" : "^5.4",
             "amazonwebservices/aws-sdk-for-php" : "~1.0"
         }
     }
@@ -71,35 +71,37 @@ any of the classes in the downloaded dependencies:
     // ...
 
     // Use composer autoloader to load vendor classes
-    require_once __DIR__ . '/../../vendor/autoload.php';
+    require_once BASE_PATH . "/vendor/autoload.php";
 
-Moreover, Vökuró, unlike the INVO, utilizes namespaces for controllers and models
-which is the recommended practice to structure a project. This way the autoloader looks slightly
-different than the one we saw before (app/config/loader.php):
+Além disso, Vökuró, ao contrário do INVO, utiliza namespaces para os controllers e models
+que é a prática recomendada para estruturar um projeto. Desta forma, o carregador automático parece um pouco
+diferente do que vimos antes (app/config/loader.php):
 
 .. code-block:: php
 
     <?php
 
-    $loader = new Phalcon\Loader();
+    use Phalcon\Loader;
+
+    $loader = new Loader();
 
     $loader->registerNamespaces(
-        array(
-            'Vokuro\Models'      => $config->application->modelsDir,
-            'Vokuro\Controllers' => $config->application->controllersDir,
-            'Vokuro\Forms'       => $config->application->formsDir,
-            'Vokuro'             => $config->application->libraryDir
-        )
+        [
+            "Vokuro\\Models"      => $config->application->modelsDir,
+            "Vokuro\\Controllers" => $config->application->controllersDir,
+            "Vokuro\\Forms"       => $config->application->formsDir,
+            "Vokuro"              => $config->application->libraryDir,
+        ]
     );
 
     $loader->register();
 
     // ...
 
-Instead of using registerDirectories, we use registerNamespaces. Every namespace points to a directory
-defined in the configuration file (app/config/config.php). For instance the namespace Vokuro\\Controllers
-points to app/controllers so all the classes required by the application within this namespace
-requires it in its definition:
+Ao invés de usar :code:`registerDirectories()`, nós usamos :code:`registerNamespaces()`. Cada namespace aponta para um diretório
+definido no arquivo de configuração (app/config/config.php). Por exemplo, o namespace Vokuro\\Controllers
+points to app/controllers por isso todas as classes requeridas pela aplicação dentro deste namespace
+são requiridos em sua definição:
 
 .. code-block:: php
 
@@ -115,8 +117,8 @@ requires it in its definition:
 
 Sign Up
 -------
-First, let's check how users are registered in Vökuró. When a user clicks the "Create an Account" button,
-the controller SessionController is invoked and the action "signup" is executed:
+Primeiro, vamos verificar como os usuários são registrados no Vökuró. Quando um usuário clica no botão "Create an Account",
+o controller SessionController é chamado e a ação "signup" é executado:
 
 .. code-block:: php
 
@@ -138,52 +140,54 @@ the controller SessionController is invoked and the action "signup" is executed:
         }
     }
 
-This action simply pass a form instance of SignUpForm to the view, which itself is rendered to
-allow the user enter the login details:
+Esta ação simplesmente passa uma instância de SignUpForm para a view, que em si é processado para
+permitir que o usuário digite os detalhes de login:
 
 .. code-block:: html+jinja
 
-    {{ form('class': 'form-search') }}
+    {{ form("class": "form-search") }}
 
-        <h2>Sign Up</h2>
+        <h2>
+            Sign Up
+        </h2>
 
-        <p>{{ form.label('name') }}</p>
+        <p>{{ form.label("name") }}</p>
         <p>
-            {{ form.render('name') }}
-            {{ form.messages('name') }}
+            {{ form.render("name") }}
+            {{ form.messages("name") }}
         </p>
 
-        <p>{{ form.label('email') }}</p>
+        <p>{{ form.label("email") }}</p>
         <p>
-            {{ form.render('email') }}
-            {{ form.messages('email') }}
+            {{ form.render("email") }}
+            {{ form.messages("email") }}
         </p>
 
-        <p>{{ form.label('password') }}</p>
+        <p>{{ form.label("password") }}</p>
         <p>
-            {{ form.render('password') }}
-            {{ form.messages('password') }}
+            {{ form.render("password") }}
+            {{ form.messages("password") }}
         </p>
 
-        <p>{{ form.label('confirmPassword') }}</p>
+        <p>{{ form.label("confirmPassword") }}</p>
         <p>
-            {{ form.render('confirmPassword') }}
-            {{ form.messages('confirmPassword') }}
+            {{ form.render("confirmPassword") }}
+            {{ form.messages("confirmPassword") }}
         </p>
 
         <p>
-            {{ form.render('terms') }} {{ form.label('terms') }}
-            {{ form.messages('terms') }}
+            {{ form.render("terms") }} {{ form.label("terms") }}
+            {{ form.messages("terms") }}
         </p>
 
-        <p>{{ form.render('Sign Up') }}</p>
+        <p>{{ form.render("Sign Up") }}</p>
 
-        {{ form.render('csrf', ['value': security.getToken()]) }}
-        {{ form.messages('csrf') }}
+        {{ form.render("csrf", ["value": security.getToken()]) }}
+        {{ form.messages("csrf") }}
 
         <hr>
 
-    </form>
+    {{ endForm() }}
 
 .. _Github: https://github.com/phalcon/vokuro
 .. _composer: https://getcomposer.org/
